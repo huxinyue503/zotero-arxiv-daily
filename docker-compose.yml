@@ -44,7 +44,7 @@ services:
       bash -c "
       rm -f /var/run/crond.pid /var/run/cron.pid && 
       printenv | grep -v 'no_proxy' >> /etc/environment && 
-      echo '0 8 * * * root cd /app && /usr/local/bin/uv run main.py >> /var/log/cron/corn.log 2>&1' > /etc/cron.d/zotero-job && 
+      echo '0 8 * * * root cd /app && /usr/local/bin/uv run main.py >> /var/log/cron/arxiv.log 2>&1 0 9 * * * root cd /app && /usr/local/bin/uv run openalex_daily.py >> /var/log/cron/openalex.log 2>&1' > /etc/cron.d/zotero-job
       chmod 0644 /etc/cron.d/zotero-job && 
       touch /var/log/cron/corn.log && 
       cron -f &&
