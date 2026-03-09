@@ -8,7 +8,7 @@ services:
     network_mode: bridge
     restart: unless-stopped
     environment:
-      # 必填参数（示例值）
+      # 必填参数
       - ZOTERO_ID=1234567
       - ZOTERO_KEY=AbCdEfGhIjKlMnOpQrStUvWx
       - SMTP_SERVER=smtp.example.com
@@ -17,36 +17,31 @@ services:
       - SENDER_PASSWORD=your_email_password
       - RECEIVER=receiver_email@example.com
 
-      # 可选参数（带默认值）
+      # 可选参数
       - ZOTERO_IGNORE=already_read_papers
       - ARXIV_QUERY=cs.AI+cs.CV+cs.LG+cs.CL
       - SEND_EMPTY=False
       - MAX_PAPER_NUM=5
-      #- USE_LLM_API=1
-      #- OPENAI_API_KEY=sk-your-openai-key-here
-      #- OPENAI_API_BASE=https://api.openai.com/v1
-      #- MODEL_NAME=Qwen/Qwen1.5-7B-Instruct
       - LANGUAGE=English
       
       # 新增配置
       - HF_ENDPOINT=https://hf-mirror.com
-      # - TZ=Asia/Shanghai  # 时区设置
-      # - http_proxy=http://proxy.example.com:8080  # HTTP代理（可选）
-      # - https_proxy=http://proxy.example.com:8080 # HTTPS代理（可选）
-      # - no_proxy=localhost,127.0.0.1,.internal  # 代理排除项
+      # - TZ=Asia/Shanghai
+      # - http_proxy=http://proxy.example.com:8080
+      # - https_proxy=http://proxy.example.com:8080
 
     volumes:
-      - ./logs:/var/log/cron  # 日志持久化
-      # - ./models:/app/models  # LLM模型缓存，如果你使用本地推理的话
+      - ./logs:/var/log/cron  # 日志持久化到宿主机 logs 目录
       - /etc/localtime:/etc/localtime:ro  # 同步主机时区
 
+    # 关键修复点：使用 printf 确保换行，修正 cron 运行逻辑
     command: >
       bash -c "
       rm -f /var/run/crond.pid /var/run/cron.pid && 
       printenv | grep -v 'no_proxy' >> /etc/environment && 
-      echo '0 8 * * * root cd /app && /usr/local/bin/uv run main.py >> /var/log/cron/arxiv.log 2>&1 0 9 * * * root cd /app && /usr/local/bin/uv run openalex_daily.py >> /var/log/cron/openalex.log 2>&1' > /etc/cron.d/zotero-job
+      printf '0 8 * * * root cd /app && /usr/local/bin/uv run main.py >> /var/log/cron/arxiv.log 2>&1\n' > /etc/cron.d/zotero-job && 
       chmod 0644 /etc/cron.d/zotero-job && 
-      touch /var/log/cron/corn.log && 
-      cron -f &&
-      tail -f /var/log/cron/cron.log
+      touch /var/log/cron/arxiv.log && 
+      cron && 
+      tail -f /var/log/cron/arxiv.log
       "
