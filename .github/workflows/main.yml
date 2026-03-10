@@ -18,7 +18,8 @@ jobs:
         uses: astral-sh/setup-uv@v3
         with:
           version: '0.5.4'
-
+      - name: Check Files
+        run: ls -R
       - name: Run script
         env:
           ZOTERO_ID: ${{ secrets.ZOTERO_ID }}
